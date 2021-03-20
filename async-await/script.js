@@ -57,10 +57,10 @@ const renderCountry = function (data, className = '') {
 
 // Promises and Fetch API 
 
-// const renderError = function(msg) {
-//     countriesContainer.insertAdjacentText('beforeend', msg);
-//     countriesContainer.style.opacity = 1;
-// }
+const renderError = function(msg) {
+    countriesContainer.insertAdjacentText('beforeend', msg);
+    countriesContainer.style.opacity = 1;
+}
 
 // const getJSON = function(url, errorMsg = 'Something went wrong') {
 //     return fetch(url)
@@ -146,16 +146,42 @@ const renderCountry = function (data, className = '') {
 // Promise.reject('abc')
 // .catch(x => console.error(x));
 
-const whereAmI = async function(country) {
-    const res = await fetch(`https://restcountries.eu/rest/v2/name/${country}`);
-    const data = await res.json();
-    console.log(data);
+const getPosition = function() {
+    return new Promise(function (resolve, reject) {
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+    });
+};
 
-    renderCountry(data[0]);
+const whereAmI = async function(country) {
+    try {
+        const pos = await getPosition();
+
+        const { latitude: lat, longtitude: lng } = pos.coords;
+
+        const resGeo = await fetch(`https://geocode.xyz/${lat},${lng}?geoit=json`);
+        const dataGeo = await resGeo.json();
+        // console.log(dataGeo);
+
+        const res = await fetch(`https://restcountries.eu/rest/v2/name/${country}`);
+        const data = await res.json();
+        // console.log(data);
+
+        renderCountry(data[0]);
+
+        return `You are in ${dataGeo.city} ${dataGeo.country}`;
+    } catch(err) {
+        // console.error(err);
+        renderError(`Something went wrong ${err.message}`);
+        throw err;
+    }
 }
 
-whereAmI('portugal');
+console.log('2: SECOND');
 
-console.log('FIRST');
+whereAmI().then(city => console.log(city))
+
+console.log('1: FIRST');
+
+
 
 
